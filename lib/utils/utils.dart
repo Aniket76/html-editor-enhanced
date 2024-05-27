@@ -1138,10 +1138,6 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (widget.isExpanded)
-              Expanded(child: innerItemsWidget)
-            else
-              innerItemsWidget,
             IconTheme(
               data: IconThemeData(
                 color: _iconColor,
@@ -1149,6 +1145,10 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
               ),
               child: widget.icon ?? defaultIcon,
             ),
+            if (widget.isExpanded)
+              Expanded(child: innerItemsWidget)
+            else
+              innerItemsWidget,
           ],
         ),
       ),
