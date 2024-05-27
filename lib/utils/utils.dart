@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -1136,19 +1137,22 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
         height: widget.isDense ? _denseButtonHeight : null,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            IconTheme(
-              data: IconThemeData(
-                color: _iconColor,
-                size: widget.iconSize,
+            MouseRegion(
+              cursor: _enabled ? SystemMouseCursors.click : MouseCursor.defer,
+              child: IconTheme(
+                data: IconThemeData(
+                  color: _iconColor,
+                  size: widget.iconSize,
+                ),
+                child: widget.icon ?? defaultIcon,
               ),
-              child: widget.icon ?? defaultIcon,
             ),
-            // if (widget.isExpanded)
-            //   Expanded(child: innerItemsWidget)
-            // else
-            //   innerItemsWidget,
+            if (widget.isExpanded)
+              Expanded(child: innerItemsWidget)
+            else
+              innerItemsWidget,
           ],
         ),
       ),
