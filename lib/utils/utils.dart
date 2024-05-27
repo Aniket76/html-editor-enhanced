@@ -1145,10 +1145,10 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
               ),
               child: widget.icon ?? defaultIcon,
             ),
-            // if (widget.isExpanded)
-            //   Expanded(child: innerItemsWidget)
-            // else
-            //   innerItemsWidget,
+            if (widget.isExpanded)
+              Expanded(child: innerItemsWidget)
+            else
+              innerItemsWidget,
           ],
         ),
       ),
