@@ -1143,7 +1143,7 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
               onTap: _enabled ? _handleTap : null,
               mouseCursor: _enabled ? SystemMouseCursors.click : MouseCursor.defer,
               child: Padding(
-                padding: const EdgeInsets.all(6.0),
+                padding: const EdgeInsets.all(5.0),
                 child: IconTheme(
                   data: IconThemeData(
                     color: _iconColor,
