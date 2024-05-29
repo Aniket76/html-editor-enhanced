@@ -72,6 +72,27 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                 ),
                 callbacks: null,
               ),
+              CustomDropdownButtonHideUnderline(
+                child: CustomDropdownButton<String>(
+                  iconSize: 32,
+                  icon: Text("{...}"),
+                  menuDirection: DropdownMenuDirection.down,
+                  items: [
+                    ...['companyName', 'companyLogo'].map((e) {
+                      return CustomDropdownMenuItem(
+                        value: e,
+                        child: Text(e, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      );
+                    })
+                  ],
+                  onChanged: (String? changed) async {
+                    if (changed != null) {
+                      controller.insertHtml(
+                          '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
+                    }
+                  },
+                ),
+              )
             ],
           ),
           Container(

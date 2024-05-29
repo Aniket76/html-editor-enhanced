@@ -1139,14 +1139,18 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           mainAxisSize: MainAxisSize.max,
           children: <Widget>[
-            MouseRegion(
-              cursor: _enabled ? SystemMouseCursors.click : MouseCursor.defer,
-              child: IconTheme(
-                data: IconThemeData(
-                  color: _iconColor,
-                  size: widget.iconSize,
+            InkWell(
+              onTap: _enabled ? _handleTap : null,
+              mouseCursor: _enabled ? SystemMouseCursors.click : MouseCursor.defer,
+              child: Padding(
+                padding: const EdgeInsets.all(6.0),
+                child: IconTheme(
+                  data: IconThemeData(
+                    color: _iconColor,
+                    size: widget.iconSize,
+                  ),
+                  child: widget.icon ?? defaultIcon,
                 ),
-                child: widget.icon ?? defaultIcon,
               ),
             ),
             if (widget.isExpanded)
@@ -1192,11 +1196,7 @@ class _DropdownButtonState<T> extends State<CustomDropdownButton<T>>
           canRequestFocus: _enabled,
           focusNode: focusNode,
           autofocus: widget.autofocus,
-          child: GestureDetector(
-            onTap: _enabled ? _handleTap : null,
-            behavior: HitTestBehavior.opaque,
-            child: result,
-          ),
+          child: result,
         ),
       ),
     );
