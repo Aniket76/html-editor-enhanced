@@ -333,12 +333,13 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
           absorbing: !_enabled,
           child: Opacity(
             opacity: _enabled ? 1 : 0.5,
-            child: Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: Wrap(
-                runSpacing: widget.htmlToolbarOptions.gridViewVerticalSpacing,
-                spacing: widget.htmlToolbarOptions.gridViewHorizontalSpacing,
-                children: _buildChildren(),
+            child: Container(
+              height: widget.htmlToolbarOptions.toolbarItemHeight + 15,
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Row(
+                  children: _buildChildren(),
+                ),
               ),
             ),
           ),
@@ -2850,6 +2851,12 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
           children: t.getIcons(),
         ));
       }
+    }
+    if(widget.htmlToolbarOptions.attributeDropDown != null) {
+      toolbarChildren.add(widget.htmlToolbarOptions.attributeDropDown!);
+    }
+    toolbarChildren.add(const Spacer());
+    for (var t in widget.htmlToolbarOptions.defaultToolbarButtons) {
       if (t is OtherButtons) {
         if (t.fullscreen || t.codeview || t.help) {
           toolbarChildren.add(ToggleButtons(
@@ -2879,7 +2886,7 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
 
               if (t.getIcons1()[index].icon == Icons.fullscreen) {
                 var proceed = await widget.htmlToolbarOptions.onButtonPressed
-                        ?.call(ButtonType.fullscreen, _miscSelected[index], updateStatus) ??
+                    ?.call(ButtonType.fullscreen, _miscSelected[index], updateStatus) ??
                     true;
                 if (proceed) {
                   widget.controller.setFullScreen();
@@ -2888,7 +2895,7 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
               }
               if (t.getIcons1()[index].icon == Icons.code) {
                 var proceed = await widget.htmlToolbarOptions.onButtonPressed
-                        ?.call(ButtonType.codeview, _miscSelected[index], updateStatus) ??
+                    ?.call(ButtonType.codeview, _miscSelected[index], updateStatus) ??
                     true;
                 if (proceed) {
                   widget.controller.toggleCodeView();

@@ -37,43 +37,38 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              ToolbarWidget(
-                controller: controller,
-                htmlToolbarOptions: HtmlToolbarOptions(
-                  toolbarPosition: ToolbarPosition.custom,
-                  //by default
-                  toolbarType: ToolbarType.nativeGrid,
-                  //by default
-                  onButtonPressed: (ButtonType type, bool? status, Function? updateStatus) {
-                    if (kDebugMode) {
-                      // print("button '${describeEnum(type)}' pressed, the current selected status is $status");
-                    }
-                    return true;
-                  },
-                  onDropdownChanged: (DropdownType type, dynamic changed, Function(dynamic)? updateSelectedItem) {
-                    if (kDebugMode) {
-                      // print("dropdown '${describeEnum(type)}' changed to $changed");
-                    }
-                    return true;
-                  },
-                  mediaLinkInsertInterceptor: (String url, InsertFileType type) {
-                    if (kDebugMode) {
-                      print(url);
-                    }
-                    return true;
-                  },
-                  defaultToolbarButtons: [
-                    const FontButtons(subscript: false, superscript: false, clearAll: false, strikethrough: false),
-                    const InsertButtons(picture: false, audio: false, video: false, otherFile: false, table: false, hr: false),
-                    const OtherButtons(fullscreen: false, codeview: false, help: false),
-                  ],
-                  disableUndo: true
-                ),
-                callbacks: null,
-              ),
-              CustomDropdownButtonHideUnderline(
+          ToolbarWidget(
+            controller: controller,
+            htmlToolbarOptions: HtmlToolbarOptions(
+              toolbarPosition: ToolbarPosition.custom,
+              //by default
+              toolbarType: ToolbarType.nativeGrid,
+              //by default
+              onButtonPressed: (ButtonType type, bool? status, Function? updateStatus) {
+                if (kDebugMode) {
+                  // print("button '${describeEnum(type)}' pressed, the current selected status is $status");
+                }
+                return true;
+              },
+              onDropdownChanged: (DropdownType type, dynamic changed, Function(dynamic)? updateSelectedItem) {
+                if (kDebugMode) {
+                  // print("dropdown '${describeEnum(type)}' changed to $changed");
+                }
+                return true;
+              },
+              mediaLinkInsertInterceptor: (String url, InsertFileType type) {
+                if (kDebugMode) {
+                  print(url);
+                }
+                return true;
+              },
+              defaultToolbarButtons: [
+                const FontButtons(subscript: false, superscript: false, clearAll: false, strikethrough: false),
+                const InsertButtons(picture: false, audio: false, video: false, otherFile: false, table: false, hr: false),
+                const OtherButtons(fullscreen: false, codeview: false, help: false),
+              ],
+              disableUndo: true,
+              attributeDropDown: CustomDropdownButtonHideUnderline(
                 child: CustomDropdownButton<String>(
                   iconSize: 32,
                   icon: Text("{...}"),
@@ -88,16 +83,17 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                   ],
                   onChanged: (String? changed) async {
                     if (changed != null) {
-                      // controller.insertHtml(
-                      //     '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
+                      controller.insertHtml(
+                          '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
 
-                      controller.insertHtml('''''');
+                      // controller.insertHtml('''''');
 
                     }
                   },
                 ),
-              )
-            ],
+              ),
+            ),
+            callbacks: null,
           ),
           Container(
             color: Colors.grey,

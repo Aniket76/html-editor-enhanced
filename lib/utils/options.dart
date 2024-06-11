@@ -191,6 +191,7 @@ class HtmlToolbarOptions {
     this.gridViewVerticalSpacing = 5,
     this.allowImagePicking = true,
     this.disableUndo = false,
+    this.attributeDropDown
   });
 
   /// Allows you to set the allowed extensions when a user inserts an audio file
@@ -410,6 +411,7 @@ class HtmlToolbarOptions {
   /// is enabled. Inserting images via URL will still be possible if this is false.
   final bool allowImagePicking;
   final bool disableUndo;
+  final Widget? attributeDropDown;
 }
 
 /// Other options such as the height of the widget and the decoration surrounding it
