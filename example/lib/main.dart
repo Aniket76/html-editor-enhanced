@@ -69,6 +69,7 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                     const InsertButtons(picture: false, audio: false, video: false, otherFile: false, table: false, hr: false),
                     const OtherButtons(fullscreen: false, codeview: false, help: false),
                   ],
+                  disableUndo: true
                 ),
                 callbacks: null,
               ),
@@ -87,8 +88,11 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                   ],
                   onChanged: (String? changed) async {
                     if (changed != null) {
-                      controller.insertHtml(
-                          '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
+                      // controller.insertHtml(
+                      //     '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
+
+                      controller.insertHtml('''''');
+
                     }
                   },
                 ),

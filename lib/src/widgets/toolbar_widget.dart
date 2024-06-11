@@ -2851,7 +2851,7 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
         ));
       }
       if (t is OtherButtons) {
-        if (t.fullscreen || t.codeview || t.undo || t.redo || t.help) {
+        if (t.fullscreen || t.codeview || t.help) {
           toolbarChildren.add(ToggleButtons(
             constraints: BoxConstraints.tightFor(
               width: widget.htmlToolbarOptions.toolbarItemHeight - 2,
@@ -2893,18 +2893,6 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
                 if (proceed) {
                   widget.controller.toggleCodeView();
                   updateStatus();
-                }
-              }
-              if (t.getIcons1()[index].icon == Icons.undo) {
-                var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.undo, null, null) ?? true;
-                if (proceed) {
-                  widget.controller.undo();
-                }
-              }
-              if (t.getIcons1()[index].icon == Icons.redo) {
-                var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.redo, null, null) ?? true;
-                if (proceed) {
-                  widget.controller.redo();
                 }
               }
               if (t.getIcons1()[index].icon == Icons.help_outline) {
@@ -3129,6 +3117,43 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
                           }),
                         );
                       });
+                }
+              }
+            },
+            isSelected: _miscSelected,
+            children: t.getIcons1(),
+          ));
+        }
+        if (t.undo || t.redo) {
+          toolbarChildren.add(ToggleButtons(
+            constraints: BoxConstraints.tightFor(
+              width: widget.htmlToolbarOptions.toolbarItemHeight - 2,
+              height: widget.htmlToolbarOptions.toolbarItemHeight - 2,
+            ),
+            color: widget.htmlToolbarOptions.buttonColor,
+            selectedColor: widget.htmlToolbarOptions.buttonSelectedColor,
+            fillColor: widget.htmlToolbarOptions.buttonFillColor,
+            focusColor: widget.htmlToolbarOptions.buttonFocusColor,
+            highlightColor: widget.htmlToolbarOptions.buttonHighlightColor,
+            hoverColor: widget.htmlToolbarOptions.buttonHoverColor,
+            splashColor: widget.htmlToolbarOptions.buttonSplashColor,
+            selectedBorderColor: widget.htmlToolbarOptions.buttonSelectedBorderColor,
+            borderColor: widget.htmlToolbarOptions.buttonBorderColor,
+            borderRadius: widget.htmlToolbarOptions.buttonBorderRadius,
+            borderWidth: widget.htmlToolbarOptions.buttonBorderWidth,
+            renderBorder: widget.htmlToolbarOptions.renderBorder,
+            textStyle: widget.htmlToolbarOptions.textStyle,
+            onPressed: widget.htmlToolbarOptions.disableUndo ? null : (int index) async {
+              if (t.getIcons1()[index].icon == Icons.undo) {
+                var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.undo, null, null) ?? true;
+                if (proceed) {
+                  widget.controller.undo();
+                }
+              }
+              if (t.getIcons1()[index].icon == Icons.redo) {
+                var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.redo, null, null) ?? true;
+                if (proceed) {
+                  widget.controller.redo();
                 }
               }
             },
