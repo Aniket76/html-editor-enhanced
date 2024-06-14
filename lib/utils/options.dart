@@ -195,7 +195,7 @@ class HtmlToolbarOptions {
     this.disableRedo = false,
     this.onRedo,
     this.attributeDropDown,
-    this.urlDialogWidget
+    this.hyperlinkDialogWidget
   });
 
   /// Allows you to set the allowed extensions when a user inserts an audio file
@@ -419,7 +419,7 @@ class HtmlToolbarOptions {
   final bool disableRedo;
   final VoidCallback? onRedo;
   final Widget? attributeDropDown;
-  final Widget? urlDialogWidget;
+  final Future<bool?>? hyperlinkDialogWidget;
 }
 
 /// Other options such as the height of the widget and the decoration surrounding it

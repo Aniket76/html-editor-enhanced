@@ -2236,7 +2236,7 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
                     builder: (BuildContext context) {
                       return PointerInterceptor(
                         child: StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
-                          return widget.htmlToolbarOptions.urlDialogWidget ?? AlertDialog(
+                          return widget.htmlToolbarOptions.hyperlinkDialogWidget ?? AlertDialog(
                             elevation: 0,
                             buttonPadding: EdgeInsets.zero,
                             actionsPadding: EdgeInsets.all(24),
