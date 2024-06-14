@@ -1,6 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
+
 
 void main() => runApp(HtmlEditorExampleApp());
 
@@ -28,7 +32,57 @@ class HtmlEditorExample extends StatefulWidget {
 
 class _HtmlEditorExampleState extends State<HtmlEditorExample> {
   String result = '';
+  int redoUndoCount = 0;
+  int mainRedoUndoCount = 0;
+  bool isRedoUndoDisable = true;
   final HtmlEditorController controller = HtmlEditorController();
+  bool _isControlPressed = false;
+  bool callContentChange = true;
+  String changedContent = '';
+
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   js.context['handlePasteEvent'] = handlePasteEvent;
+  //   injectPasteHandler();
+  // }
+  //
+  // void injectPasteHandler() {
+  //   js.context.callMethod('eval', ["""
+  //     document.addEventListener('paste', async function(event) {
+  //       if (event.clipboardData && event.clipboardData.getData) {
+  //         event.stopPropagation();
+  //         event.preventDefault();
+  //         let html = event.clipboardData.getData('text/html');
+  //         if (html) {
+  //           html = await handlePasteEvent(html);
+  //           let selection = window.getSelection();
+  //           if (!selection.rangeCount) return false;
+  //           selection.deleteFromDocument();
+  //           let range = selection.getRangeAt(0);
+  //           let node = document.createElement('div');
+  //           node.innerHTML = html;
+  //           let frag = document.createDocumentFragment(), child;
+  //           while ((child = node.firstChild)) {
+  //             frag.appendChild(child);
+  //           }
+  //           range.insertNode(frag);
+  //         }
+  //       }
+  //     });
+  //   """]);
+  // }
+  //
+  // Future<String> handlePasteEvent(String html) async {
+  //   RegExp liRegex = RegExp(r'<li[^>]*>(.*?)</li>', dotAll: true);
+  //   RegExp olRegex = RegExp(r'<ol[^>]*>(.*?)</ol>', dotAll: true);
+  //
+  //   String modifiedHtmlString = html
+  //       .replaceAllMapped(liRegex, (Match match) => match.group(1) ?? '')
+  //       .replaceAllMapped(olRegex, (Match match) => match.group(1) ?? '');
+  //
+  //   return modifiedHtmlString;
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -67,7 +121,24 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                 const InsertButtons(picture: false, audio: false, video: false, otherFile: false, table: false, hr: false),
                 const OtherButtons(fullscreen: false, codeview: false, help: false),
               ],
-              disableUndo: true,
+              // disableUndo: redoUndoCount == 0,
+              disableUndo: isRedoUndoDisable,
+              onUndo: () {
+                setState(() {
+                  if (redoUndoCount > 0) {
+                    redoUndoCount--;
+                  }
+                });
+              },
+              // disableRedo: redoUndoCount == mainRedoUndoCount,
+              disableRedo: isRedoUndoDisable,
+              onRedo: () {
+                setState(() {
+                  if (redoUndoCount <= mainRedoUndoCount) {
+                    redoUndoCount++;
+                  }
+                });
+              },
               attributeDropDown: CustomDropdownButtonHideUnderline(
                 child: CustomDropdownButton<String>(
                   iconSize: 32,
@@ -85,12 +156,93 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                     if (changed != null) {
                       controller.insertHtml(
                           '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
-
-                      // controller.insertHtml('''''');
-
+                      // controller.insertHtml('''<button>$changed</button>&nbsp;''');
+                      if(isRedoUndoDisable) {
+                        setState(() {
+                          isRedoUndoDisable = false;
+                        });
+                      }
                     }
                   },
                 ),
+              ),
+              urlDialogWidget: AlertDialog(
+                elevation: 0,
+                buttonPadding: EdgeInsets.zero,
+                actionsPadding: EdgeInsets.all(24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                contentPadding: EdgeInsets.all(24),
+                insetPadding: EdgeInsets.zero,
+                backgroundColor: Colors.white,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Insert Link'),
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Icon(Icons.cancel),
+                    )
+                  ],
+                ),
+                scrollable: true,
+                // content: Form(
+                //   key: formKey,
+                //   child: Column(
+                //     mainAxisSize: MainAxisSize.min,
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       CustomInputField(
+                //         required: true,
+                //         label: 'Text to display',
+                //         hintText: 'Enter Text',
+                //         controller: text,
+                //         multipleLines: false,
+                //         inputFormattersType: InputFormattersType.paragraph,
+                //         onChanged: (val) {},
+                //       ),
+                //       SizedBox(height: 16),
+                //       SizedBox(
+                //         width: 500,
+                //         child: CustomInputField(
+                //           required: true,
+                //           label: 'URL',
+                //           hintText: 'Enter URL',
+                //           controller: url,
+                //           multipleLines: false,
+                //           inputFormattersType: InputFormattersType.paragraph,
+                //           onChanged: (val) {},
+                //         ),
+                //       ),
+                //       SizedBox(height: 16),
+                //       CustomButton(
+                //         isLarge: true,
+                //         onPressed: () async {
+                //           if (formKey.currentState!.validate()) {
+                //             var proceed = await widget.htmlToolbarOptions.linkInsertInterceptor
+                //                 ?.call(text.text.isEmpty ? url.text : text.text, url.text, openNewTab) ??
+                //                 true;
+                //             if (proceed) {
+                //               widget.controller.insertLink(
+                //                 text.text.isEmpty ? url.text : text.text,
+                //                 url.text,
+                //                 openNewTab,
+                //               );
+                //             }
+                //             Navigator.of(context).pop();
+                //           }
+                //         },
+                //         label: 'Add Hyperlink',
+                //       ),
+                //     ],
+                //   ),
+                // ),
               ),
             ),
             callbacks: null,
@@ -104,437 +256,111 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
             controller: controller,
             htmlEditorOptions: HtmlEditorOptions(
               hint: 'Your text here...',
+              // initialText: '''<input type="button" value="test" style="background-color:red; color:white" disable>'''
             ),
             htmlToolbarOptions: const HtmlToolbarOptions(
               toolbarPosition: ToolbarPosition.custom,
             ),
             otherOptions: OtherOptions(height: MediaQuery.of(context).size.height - 230),
-            callbacks: Callbacks(onChangeContent: (String? changed) {
-              debugPrint('content changed to $changed');
-              // widget.cubit.onTextEditorContentChange(changed ?? '');
-            }),
+            callbacks: Callbacks(
+              onChangeContent: (String? changed) {
+                debugPrint('content changed to $changed');
+                // if(changed != null) {
+                //   debugPrint('Outside If $changed, ${changed.length}, ${changedContent.length}');
+                //   if(changed.length+1 >= changedContent.length) {
+                //     debugPrint('Inside If $changed, ${changed.length}, ${changedContent.length}');
+                //     changedContent = changed ?? '';
+                //   }
+                // }
+                // if (changed != null) {
+                //   String filter = filterButtonTags(changed, ['companyName', 'companyLogo']);
+                //   if (filter != changed) {
+                //     controller.clear();
+                //     controller.insertHtml(filter);
+                //   }
+                // }
+                // setState(() {
+                  // if (redoUndoCount == mainRedoUndoCount) {
+                  //   redoUndoCount++;
+                  // }
+                  // mainRedoUndoCount++;
+                  // isRedoUndoDisable = false;
+                // });
+              },
+              onKeyDown: (index) {
+                debugPrint('index: $index');
+                // if (index == 8) {
+                //   callContentChange = false;
+                //   String filter = filterButtonTags(changedContent, ['companyName', 'companyLogo']);
+                //   if (filter != changedContent) {
+                //     controller.clear();
+                //     controller.insertHtml(filter);
+                //   }
+                // }
+                if(isRedoUndoDisable) {
+                  setState(() {
+                    isRedoUndoDisable = false;
+                  });
+                }
+              }
+              // onKeyDown: (index) async {
+              //   if (!_isControlPressed) {
+              //     _isControlPressed = index == 91;
+              //   }
+              //   if ((_isControlPressed && index == 86)) {
+              //     final clipboardData = await RichClipboard.getData();
+              //     if (clipboardData.html != null) {
+              //       debugPrint('Inside If');
+              //       // Define the regular expressions to match the <li> and <ol> tags
+              //       RegExp liRegex = RegExp(r'<li[^>]*>(.*?)</li>', dotAll: true);
+              //       RegExp olRegex = RegExp(r'<ol[^>]*>(.*?)</ol>', dotAll: true);
+              //
+              //       // Replace the <li> and <ol> tags with an empty string
+              //       String modifiedHtmlString = clipboardData.html
+              //           !.replaceAllMapped(liRegex, (Match match) => match.group(1) ?? '')
+              //           .replaceAllMapped(olRegex, (Match match) => match.group(1) ?? '');
+              //
+              //       // print('modifiedHtmlString: $modifiedHtmlString');
+              //       // String modifiedText = clipboardData.text!.toLowerCase();
+              //       // await RichClipboard.setData(RichClipboardData(
+              //       //     html: modifiedHtmlString
+              //       // ));
+              //       Future.microtask(() {
+              //         _isControlPressed = false;
+              //         controller.insertHtml(modifiedHtmlString);
+              //       });
+              //     }
+              //   }
+              // }
+            ),
           )
         ],
       ),
     );
-
-    // return GestureDetector(
-    //   onTap: () {
-    //     if (!kIsWeb) {
-    //       controller.clearFocus();
-    //     }
-    //   },
-    //   child: Scaffold(
-    //     appBar: AppBar(
-    //       title: Text(widget.title),
-    //       elevation: 0,
-    //       actions: [
-    //         IconButton(
-    //             icon: Icon(Icons.refresh),
-    //             onPressed: () {
-    //               if (kIsWeb) {
-    //                 controller.reloadWeb();
-    //               } else {
-    //                 controller.editorController!.reload();
-    //               }
-    //             })
-    //       ],
-    //     ),
-    //     floatingActionButton: FloatingActionButton(
-    //       onPressed: () {
-    //         controller.toggleCodeView();
-    //       },
-    //       child: Text(r'<\>',
-    //           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-    //     ),
-    //     body: SingleChildScrollView(
-    //       child: Column(
-    //         mainAxisAlignment: MainAxisAlignment.center,
-    //         children: <Widget>[
-    //           HtmlEditor(
-    //             controller: controller,
-    //             htmlEditorOptions: HtmlEditorOptions(
-    //               hint: 'Your text here...',
-    //               shouldEnsureVisible: true,
-    //               //initialText: "<p>text content initial, if any</p>",
-    //             ),
-    //             htmlToolbarOptions: HtmlToolbarOptions(
-    //               toolbarPosition: ToolbarPosition.aboveEditor, //by default
-    //               toolbarType: ToolbarType.nativeScrollable, //by default
-    //               onButtonPressed:
-    //                   (ButtonType type, bool? status, Function? updateStatus) {
-    //                 print(
-    //                     "button '${describeEnum(type)}' pressed, the current selected status is $status");
-    //                 return true;
-    //               },
-    //               onDropdownChanged: (DropdownType type, dynamic changed,
-    //                   Function(dynamic)? updateSelectedItem) {
-    //                 print(
-    //                     "dropdown '${describeEnum(type)}' changed to $changed");
-    //                 return true;
-    //               },
-    //               mediaLinkInsertInterceptor:
-    //                   (String url, InsertFileType type) {
-    //                 print(url);
-    //                 return true;
-    //               },
-    //               mediaUploadInterceptor:
-    //                   (PlatformFile file, InsertFileType type) async {
-    //                 print(file.name); //filename
-    //                 print(file.size); //size in bytes
-    //                 print(file.extension); //file extension (eg jpeg or mp4)
-    //                 return true;
-    //               },
-    //             ),
-    //             otherOptions: OtherOptions(height: 550),
-    //             callbacks: Callbacks(onBeforeCommand: (String? currentHtml) {
-    //               print('html before change is $currentHtml');
-    //             }, onChangeContent: (String? changed) {
-    //               print('content changed to $changed');
-    //             }, onChangeCodeview: (String? changed) {
-    //               print('code changed to $changed');
-    //             }, onChangeSelection: (EditorSettings settings) {
-    //               print('parent element is ${settings.parentElement}');
-    //               print('font name is ${settings.fontName}');
-    //             }, onDialogShown: () {
-    //               print('dialog shown');
-    //             }, onEnter: () {
-    //               print('enter/return pressed');
-    //             }, onFocus: () {
-    //               print('editor focused');
-    //             }, onBlur: () {
-    //               print('editor unfocused');
-    //             }, onBlurCodeview: () {
-    //               print('codeview either focused or unfocused');
-    //             }, onInit: () {
-    //               print('init');
-    //             },
-    //                 //this is commented because it overrides the default Summernote handlers
-    //                 /*onImageLinkInsert: (String? url) {
-    //                 print(url ?? "unknown url");
-    //               },
-    //               onImageUpload: (FileUpload file) async {
-    //                 print(file.name);
-    //                 print(file.size);
-    //                 print(file.type);
-    //                 print(file.base64);
-    //               },*/
-    //                 onImageUploadError: (FileUpload? file, String? base64Str,
-    //                     UploadError error) {
-    //               print(describeEnum(error));
-    //               print(base64Str ?? '');
-    //               if (file != null) {
-    //                 print(file.name);
-    //                 print(file.size);
-    //                 print(file.type);
-    //               }
-    //             }, onKeyDown: (int? keyCode) {
-    //               print('$keyCode key downed');
-    //               print(
-    //                   'current character count: ${controller.characterCount}');
-    //             }, onKeyUp: (int? keyCode) {
-    //               print('$keyCode key released');
-    //             }, onMouseDown: () {
-    //               print('mouse downed');
-    //             }, onMouseUp: () {
-    //               print('mouse released');
-    //             }, onNavigationRequestMobile: (String url) {
-    //               print(url);
-    //               return NavigationActionPolicy.ALLOW;
-    //             }, onPaste: () {
-    //               print('pasted into editor');
-    //             }, onScroll: () {
-    //               print('editor scrolled');
-    //             }),
-    //             plugins: [
-    //               SummernoteAtMention(
-    //                   getSuggestionsMobile: (String value) {
-    //                     var mentions = <String>['test1', 'test2', 'test3'];
-    //                     return mentions
-    //                         .where((element) => element.contains(value))
-    //                         .toList();
-    //                   },
-    //                   mentionsWeb: ['test1', 'test2', 'test3'],
-    //                   onSelect: (String value) {
-    //                     print(value);
-    //                   }),
-    //             ],
-    //           ),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: <Widget>[
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor: Colors.blueGrey),
-    //                   onPressed: () {
-    //                     controller.undo();
-    //                   },
-    //                   child:
-    //                       Text('Undo', style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor: Colors.blueGrey),
-    //                   onPressed: () {
-    //                     controller.clear();
-    //                   },
-    //                   child:
-    //                       Text('Reset', style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () async {
-    //                     var txt = await controller.getText();
-    //                     if (txt.contains('src=\"data:')) {
-    //                       txt =
-    //                           '<text removed due to base-64 data, displaying the text could cause the app to crash>';
-    //                     }
-    //                     setState(() {
-    //                       result = txt;
-    //                     });
-    //                   },
-    //                   child: Text(
-    //                     'Submit',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () {
-    //                     controller.redo();
-    //                   },
-    //                   child: Text(
-    //                     'Redo',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Text(result),
-    //           ),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: <Widget>[
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor: Colors.blueGrey),
-    //                   onPressed: () {
-    //                     controller.disable();
-    //                   },
-    //                   child: Text('Disable',
-    //                       style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () async {
-    //                     controller.enable();
-    //                   },
-    //                   child: Text(
-    //                     'Enable',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           SizedBox(height: 16),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: <Widget>[
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () {
-    //                     controller.insertText('Google');
-    //                   },
-    //                   child: Text('Insert Text',
-    //                       style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () {
-    //                     controller.insertHtml(
-    //                         '''<p style="color: blue">Google in blue</p>''');
-    //                   },
-    //                   child: Text('Insert HTML',
-    //                       style: TextStyle(color: Colors.white)),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: <Widget>[
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () async {
-    //                     controller.insertLink(
-    //                         'Google linked', 'https://google.com', true);
-    //                   },
-    //                   child: Text(
-    //                     'Insert Link',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () {
-    //                     controller.insertNetworkImage(
-    //                         'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png',
-    //                         filename: 'Google network image');
-    //                   },
-    //                   child: Text(
-    //                     'Insert network image',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           SizedBox(height: 16),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: <Widget>[
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor: Colors.blueGrey),
-    //                   onPressed: () {
-    //                     controller.addNotification(
-    //                         'Info notification', NotificationType.info);
-    //                   },
-    //                   child:
-    //                       Text('Info', style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor: Colors.blueGrey),
-    //                   onPressed: () {
-    //                     controller.addNotification(
-    //                         'Warning notification', NotificationType.warning);
-    //                   },
-    //                   child: Text('Warning',
-    //                       style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () async {
-    //                     controller.addNotification(
-    //                         'Success notification', NotificationType.success);
-    //                   },
-    //                   child: Text(
-    //                     'Success',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () {
-    //                     controller.addNotification(
-    //                         'Danger notification', NotificationType.danger);
-    //                   },
-    //                   child: Text(
-    //                     'Danger',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //           SizedBox(height: 16),
-    //           Padding(
-    //             padding: const EdgeInsets.all(8.0),
-    //             child: Row(
-    //               mainAxisAlignment: MainAxisAlignment.center,
-    //               children: <Widget>[
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor: Colors.blueGrey),
-    //                   onPressed: () {
-    //                     controller.addNotification('Plaintext notification',
-    //                         NotificationType.plaintext);
-    //                   },
-    //                   child: Text('Plaintext',
-    //                       style: TextStyle(color: Colors.white)),
-    //                 ),
-    //                 SizedBox(
-    //                   width: 16,
-    //                 ),
-    //                 TextButton(
-    //                   style: TextButton.styleFrom(
-    //                       backgroundColor:
-    //                           Theme.of(context).colorScheme.secondary),
-    //                   onPressed: () async {
-    //                     controller.removeNotification();
-    //                   },
-    //                   child: Text(
-    //                     'Remove',
-    //                     style: TextStyle(color: Colors.white),
-    //                   ),
-    //                 ),
-    //               ],
-    //             ),
-    //           ),
-    //         ],
-    //       ),
-    //     ),
-    //   ),
-    // );
   }
+
+  String filterButtonTags(String htmlString, List<String> attributeList) {
+    debugPrint('htmlString: $htmlString');
+    // Parse the HTML string
+    dom.Document document = html_parser.parse(htmlString);
+
+    // Find all <button> tags
+    List<dom.Element> buttonElements = document.querySelectorAll('button');
+
+    for (var button in buttonElements) {
+      // Get the text content of the button
+      String buttonText = button.text.trim();
+
+      // Check if the button text is in the attributeList
+      if (!attributeList.contains(buttonText)) {
+        // Remove the <button> tag if the text is not in the attributeList
+        button.remove();
+      }
+    }
+
+    // Return the modified HTML string
+    debugPrint('document.body?.outerHtml: ${document.body?.outerHtml}');
+    return document.body?.outerHtml ?? '';
+  }
+
 }

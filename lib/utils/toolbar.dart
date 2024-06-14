@@ -213,4 +213,16 @@ class OtherButtons extends Toolbar {
     if (paste) icons.add(Icon(Icons.paste));
     return icons;
   }
+
+  List<Icon> getIconsRedo() {
+    var icons = <Icon>[];
+    if (redo) icons.add(Icon(Icons.redo));
+    return icons;
+  }
+
+  List<Icon> getIconsUndo() {
+    var icons = <Icon>[];
+    if (undo) icons.add(Icon(Icons.undo));
+    return icons;
+  }
 }

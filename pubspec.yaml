@@ -33,6 +33,8 @@ dependencies:
   lints: ^4.0.0
   # plugin for @internal annotation
   meta: '>=1.0.0 <2.0.0'
+  rich_clipboard: ^1.0.1
+  html: ^0.15.0
 
 dev_dependencies:
   flutter_test:

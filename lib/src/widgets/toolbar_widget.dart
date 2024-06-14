@@ -11,6 +11,9 @@ import 'package:html_editor_enhanced/src/widgets/custom_input_field.dart';
 import 'package:html_editor_enhanced/utils/utils.dart';
 import 'package:numberpicker/numberpicker.dart';
 import 'package:pointer_interceptor/pointer_interceptor.dart';
+import 'package:rich_clipboard/rich_clipboard.dart';
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
 
 /// Toolbar widget class
 class ToolbarWidget extends StatefulWidget {
@@ -2233,7 +2236,7 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
                     builder: (BuildContext context) {
                       return PointerInterceptor(
                         child: StatefulBuilder(builder: (BuildContext context, StateSetter setState) {
-                          return AlertDialog(
+                          return widget.htmlToolbarOptions.urlDialogWidget ?? AlertDialog(
                             elevation: 0,
                             buttonPadding: EdgeInsets.zero,
                             actionsPadding: EdgeInsets.all(24),
@@ -3131,7 +3134,7 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
             children: t.getIcons1(),
           ));
         }
-        if (t.undo || t.redo) {
+        if (t.undo) {
           toolbarChildren.add(ToggleButtons(
             constraints: BoxConstraints.tightFor(
               width: widget.htmlToolbarOptions.toolbarItemHeight - 2,
@@ -3151,21 +3154,44 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
             renderBorder: widget.htmlToolbarOptions.renderBorder,
             textStyle: widget.htmlToolbarOptions.textStyle,
             onPressed: widget.htmlToolbarOptions.disableUndo ? null : (int index) async {
-              if (t.getIcons1()[index].icon == Icons.undo) {
-                var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.undo, null, null) ?? true;
-                if (proceed) {
-                  widget.controller.undo();
-                }
-              }
-              if (t.getIcons1()[index].icon == Icons.redo) {
-                var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.redo, null, null) ?? true;
-                if (proceed) {
-                  widget.controller.redo();
-                }
+              var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.undo, null, null) ?? true;
+              if (proceed) {
+                widget.controller.undo();
+                widget.htmlToolbarOptions.onUndo?.call();
               }
             },
-            isSelected: _miscSelected,
-            children: t.getIcons1(),
+            isSelected: List<bool>.filled(t.getIconsUndo().length, false),
+            children: t.getIconsUndo(),
+          ));
+        }
+        if (t.redo) {
+          toolbarChildren.add(ToggleButtons(
+            constraints: BoxConstraints.tightFor(
+              width: widget.htmlToolbarOptions.toolbarItemHeight - 2,
+              height: widget.htmlToolbarOptions.toolbarItemHeight - 2,
+            ),
+            color: widget.htmlToolbarOptions.buttonColor,
+            selectedColor: widget.htmlToolbarOptions.buttonSelectedColor,
+            fillColor: widget.htmlToolbarOptions.buttonFillColor,
+            focusColor: widget.htmlToolbarOptions.buttonFocusColor,
+            highlightColor: widget.htmlToolbarOptions.buttonHighlightColor,
+            hoverColor: widget.htmlToolbarOptions.buttonHoverColor,
+            splashColor: widget.htmlToolbarOptions.buttonSplashColor,
+            selectedBorderColor: widget.htmlToolbarOptions.buttonSelectedBorderColor,
+            borderColor: widget.htmlToolbarOptions.buttonBorderColor,
+            borderRadius: widget.htmlToolbarOptions.buttonBorderRadius,
+            borderWidth: widget.htmlToolbarOptions.buttonBorderWidth,
+            renderBorder: widget.htmlToolbarOptions.renderBorder,
+            textStyle: widget.htmlToolbarOptions.textStyle,
+            onPressed: widget.htmlToolbarOptions.disableRedo ? null : (int index) async {
+              var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.redo, null, null) ?? true;
+              if (proceed) {
+                widget.controller.redo();
+                widget.htmlToolbarOptions.onRedo?.call();
+              }
+            },
+            isSelected: List<bool>.filled(t.getIconsRedo().length, false),
+            children: t.getIconsRedo(),
           ));
         }
         if (t.copy || t.paste) {
@@ -3198,10 +3224,13 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
               if (t.getIcons2()[index].icon == Icons.paste) {
                 var proceed = await widget.htmlToolbarOptions.onButtonPressed?.call(ButtonType.paste, null, null) ?? true;
                 if (proceed) {
-                  var data = await Clipboard.getData(Clipboard.kTextPlain);
-                  if (data != null) {
+                  var data = await RichClipboard.getData();
+                  if (data.html != null) {
+                    var text = data.html!;
+                    widget.controller.insertHtml(filterHtml(text));
+                  } else if (data.text != null) {
                     var text = data.text!;
-                    widget.controller.insertHtml(text);
+                    widget.controller.insertText(text);
                   }
                 }
               }
@@ -3232,4 +3261,99 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
     // }
     return toolbarChildren;
   }
+
+  String filterHtml(String htmlString) {
+    // Parse the HTML string
+    dom.Document document = html_parser.parse(htmlString);
+
+    // Define allowed tags
+    const allowedTags = {
+      'p', 'span', 'b', 'i', 'u', 'input', 'a', 'br', 'strong'
+    };
+
+    // Collect nodes to be removed
+    List<dom.Node> nodesToRemove = [];
+
+    // Function to filter nodes
+    void filterNode(dom.Node node) {
+      if (node is dom.Element) {
+        if (!allowedTags.contains(node.localName)) {
+          // Collect disallowed element nodes to be removed later
+          nodesToRemove.add(node);
+        } else {
+          // Recursively filter child nodes
+          node.nodes.forEach(filterNode);
+        }
+      } else if (node is dom.Text) {
+        // Keep text nodes
+        return;
+      } else {
+        // Collect other types of nodes to be removed later
+        nodesToRemove.add(node);
+      }
+    }
+
+    document.body?.nodes.forEach(filterNode);
+
+    // Remove collected nodes
+    for (var node in nodesToRemove) {
+      final parent = node.parent;
+      if (parent != null) {
+        final children = List.from(node.nodes);
+        for (var child in children) {
+          parent.insertBefore(child, node);
+        }
+        node.remove();
+      }
+    }
+
+    // Remove any remaining <li> tags manually
+    document.querySelectorAll('li').forEach((liElement) {
+      final parent = liElement.parent;
+      if (parent != null) {
+        final children = List.from(liElement.nodes);
+        for (var child in children) {
+          parent.insertBefore(child, liElement);
+        }
+        liElement.remove();
+      }
+    });
+
+    // Return the modified HTML string
+    return document.body?.outerHtml ?? '';
+  }
+
+  // String filterHtml(String html) {
+  //   var document = parse(html);
+  //   var allowedTags = ['p', 'span', 'b', 'i', 'u', 'input', 'a', 'br', 'strong', 'li'];
+  //   _removeDisallowedTags(document.body?.children, allowedTags);
+  //   return document.body?.outerHtml ?? '';
+  // }
+  //
+  // void _removeDisallowedTags(List<dom.Node>? nodes, List<String> allowedTags) {
+  //   if (nodes == null) return;
+  //
+  //   for (var i = 0; i < nodes.length; i++) {
+  //     var node = nodes[i];
+  //     if (node is dom.Element && !allowedTags.contains(node.localName) && node.localName != 'li') {
+  //       var parent = node.parent;
+  //       var nextIndex = i + 1;
+  //       if (nextIndex < nodes.length) {
+  //         var next = nodes[nextIndex];
+  //         for (var child in node.children) {
+  //           parent?.insertBefore(child, next);
+  //         }
+  //       } else {
+  //         var tempNode = dom.Element.tag('span');
+  //         for (var child in node.children) {
+  //           tempNode.append(child);
+  //         }
+  //         parent?.append(tempNode);
+  //       }
+  //       node.remove();
+  //     } else {
+  //       _removeDisallowedTags(node.children, allowedTags);
+  //     }
+  //   }
+  // }
 }
