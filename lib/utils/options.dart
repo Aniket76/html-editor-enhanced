@@ -419,7 +419,7 @@ class HtmlToolbarOptions {
   final bool disableRedo;
   final VoidCallback? onRedo;
   final Widget? attributeDropDown;
-  final Future<bool?>? hyperlinkDialogWidget;
+  final Widget? hyperlinkDialogWidget;
 }
 
 /// Other options such as the height of the widget and the decoration surrounding it
