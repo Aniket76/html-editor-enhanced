@@ -166,6 +166,84 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                   },
                 ),
               ),
+              hyperlinkDialogWidget: AlertDialog(
+                elevation: 0,
+                buttonPadding: EdgeInsets.zero,
+                actionsPadding: EdgeInsets.all(24),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+                contentPadding: EdgeInsets.all(24),
+                insetPadding: EdgeInsets.zero,
+                backgroundColor: Colors.white,
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Insert Link'),
+                    InkWell(
+                      splashColor: Colors.transparent,
+                      highlightColor: Colors.transparent,
+                      hoverColor: Colors.transparent,
+                      onTap: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: Icon(Icons.cancel),
+                    )
+                  ],
+                ),
+                scrollable: true,
+                // content: Form(
+                //   key: formKey,
+                //   child: Column(
+                //     mainAxisSize: MainAxisSize.min,
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       CustomInputField(
+                //         required: true,
+                //         label: 'Text to display',
+                //         hintText: 'Enter Text',
+                //         controller: text,
+                //         multipleLines: false,
+                //         inputFormattersType: InputFormattersType.paragraph,
+                //         onChanged: (val) {},
+                //       ),
+                //       SizedBox(height: 16),
+                //       SizedBox(
+                //         width: 500,
+                //         child: CustomInputField(
+                //           required: true,
+                //           label: 'URL',
+                //           hintText: 'Enter URL',
+                //           controller: url,
+                //           multipleLines: false,
+                //           inputFormattersType: InputFormattersType.paragraph,
+                //           onChanged: (val) {},
+                //         ),
+                //       ),
+                //       SizedBox(height: 16),
+                //       CustomButton(
+                //         isLarge: true,
+                //         onPressed: () async {
+                //           if (formKey.currentState!.validate()) {
+                //             var proceed = await widget.htmlToolbarOptions.linkInsertInterceptor
+                //                 ?.call(text.text.isEmpty ? url.text : text.text, url.text, openNewTab) ??
+                //                 true;
+                //             if (proceed) {
+                //               widget.controller.insertLink(
+                //                 text.text.isEmpty ? url.text : text.text,
+                //                 url.text,
+                //                 openNewTab,
+                //               );
+                //             }
+                //             Navigator.of(context).pop();
+                //           }
+                //         },
+                //         label: 'Add Hyperlink',
+                //       ),
+                //     ],
+                //   ),
+                // ),
+              ),
             ),
             callbacks: null,
           ),
