@@ -154,7 +154,8 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                     controller.getText();
                     if (changed != null) {
                       // controller.insertHtml('''<button id="shankar-button2" contenteditable="false" style="user-select: none;">$changed </button>''');
-                      controller.insertHtml('''<button id="merge-tag">$changed</button>''');
+                      controller.insertHtml('''<button id="merge-tag">$changed</button>&nbsp;''');
+                      // controller.insertHtml('''<input readonly id="merge-tag" value =$changed>&nbsp;''');
                       if (isRedoUndoDisable) {
                         setState(() {
                           isRedoUndoDisable = false;

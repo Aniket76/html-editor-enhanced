@@ -99,13 +99,31 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
                 e.ctrlKey === true && e.which === 90    /* CTRL + Z */
             );
             if (!allowedKeys && \$(e.target).text().length >= ${widget.htmlEditorOptions.characterLimit}) {
-                e.preventDefault();
+                // e.preventDefault();
             }''' : ''}
-            console.log(`summernoteCallbacks onKeydown`);  // Log message
-            window.parent.postMessage(JSON.stringify({"view": "$createdViewId", "type": "toDart: characterCount", "totalChars": totalChars}), "*");
-            document.querySelectorAll('#merge-tag').forEach(span => {
-               span.contentEditable = false;
-            });
+            var allowedKeys = (
+              e.which === 35 ||  // END
+              e.which === 36 ||  // HOME
+              e.which === 37 ||  // LEFT
+              e.which === 38 ||  // UP
+              e.which === 39 ||  // RIGHT
+              e.which === 40 ||  // DOWN
+              (e.ctrlKey && e.which === 65) ||  // CTRL + A
+              (e.ctrlKey && e.which === 67) ||  // CTRL + C
+              (e.ctrlKey && e.which === 90)     // CTRL + Z
+            );
+
+          if (!allowedKeys) {
+              // Not Allowed key is pressed, proceed with the action
+              console.log(`summernoteCallbacks onKeydown - not allowed keys`);  // Log message
+              window.parent.postMessage(JSON.stringify({"view": "$createdViewId", "type": "toDart: characterCount", "totalChars": totalChars}), "*");
+              document.querySelectorAll('#merge-tag').forEach(span => {
+                span.contentEditable = false;
+              });
+            } else {
+              console.log(`summernoteCallbacks onKeydown - allowedKeys`);  // Log message
+            }
+
         },
         onMouseup: function(e) {
           console.log(`summernoteCallbacks onMouseUp`);  // Log message
