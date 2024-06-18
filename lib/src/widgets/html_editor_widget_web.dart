@@ -71,6 +71,15 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
   void initSummernote() async {
     var headString = '';
     var summernoteCallbacks = '''callbacks: {
+        onBeforeCommand: function(e) {
+          console.log(`summernoteCallbacks onBeforeCommand`);  // Log message
+        },
+        onKeyup: function(e) {
+          console.log(`summernoteCallbacks onKeyUp`);  // Log message
+            document.querySelectorAll('#merge-tag').forEach(span => {
+                span.contentEditable = true;
+            });
+        },
         onKeydown: function(e) {
             var chars = \$(".note-editable").text();
             var totalChars = chars.length;
@@ -90,10 +99,39 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
                 e.ctrlKey === true && e.which === 90    /* CTRL + Z */
             );
             if (!allowedKeys && \$(e.target).text().length >= ${widget.htmlEditorOptions.characterLimit}) {
-                e.preventDefault();
+                // e.preventDefault();
             }''' : ''}
-            window.parent.postMessage(JSON.stringify({"view": "$createdViewId", "type": "toDart: characterCount", "totalChars": totalChars}), "*");
+            var allowedKeys = (
+              e.which === 35 ||  // END
+              e.which === 36 ||  // HOME
+              e.which === 37 ||  // LEFT
+              e.which === 38 ||  // UP
+              e.which === 39 ||  // RIGHT
+              e.which === 40 ||  // DOWN
+              (e.ctrlKey && e.which === 65) ||  // CTRL + A
+              (e.ctrlKey && e.which === 67) ||  // CTRL + C
+              (e.ctrlKey && e.which === 90)     // CTRL + Z
+            );
+
+          if (!allowedKeys) {
+              // Not Allowed key is pressed, proceed with the action
+              console.log(`summernoteCallbacks onKeydown - not allowed keys`);  // Log message
+              window.parent.postMessage(JSON.stringify({"view": "$createdViewId", "type": "toDart: characterCount", "totalChars": totalChars}), "*");
+              document.querySelectorAll('#merge-tag').forEach(span => {
+                span.contentEditable = false;
+              });
+            } else {
+              console.log(`summernoteCallbacks onKeydown - allowedKeys`);  // Log message
+            }
+
         },
+        onMouseup: function(e) {
+          console.log(`summernoteCallbacks onMouseUp`);  // Log message
+        },
+        onMousedown: function(e) {
+          console.log(`summernoteCallbacks onMouseDown`);  // Log message
+        },
+        
     ''';
     var maximumFileSize = 10485760;
     for (var p in widget.plugins) {
@@ -215,8 +253,9 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
             disableGrammar: false,
             spellCheck: ${widget.htmlEditorOptions.spellCheck},
             maximumFileSize: $maximumFileSize,
+            
             ${widget.htmlEditorOptions.customOptions}
-            $summernoteCallbacks
+            $summernoteCallbacks,
           });
           
           \$('#summernote-2').on('summernote.change', function(_, contents, \$editable) {
