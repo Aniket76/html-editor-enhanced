@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
-
 
 void main() => runApp(HtmlEditorExampleApp());
 
@@ -153,11 +151,11 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
                     })
                   ],
                   onChanged: (String? changed) async {
+                    controller.getText();
                     if (changed != null) {
-                      controller.insertHtml(
-                          '''<input type="button" value="$changed" style="background-color:red; color:white" disable>''');
-                      // controller.insertHtml('''<button>$changed</button>&nbsp;''');
-                      if(isRedoUndoDisable) {
+                      // controller.insertHtml('''<button id="shankar-button2" contenteditable="false" style="user-select: none;">$changed </button>''');
+                      controller.insertHtml('''<button id="merge-tag">$changed</button>''');
+                      if (isRedoUndoDisable) {
                         setState(() {
                           isRedoUndoDisable = false;
                         });
@@ -256,83 +254,98 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
             controller: controller,
             htmlEditorOptions: HtmlEditorOptions(
               hint: 'Your text here...',
-              // initialText: '''<input type="button" value="test" style="background-color:red; color:white" disable>'''
+              // initialText: '''<button id="shankar-button"></button>'''
             ),
             htmlToolbarOptions: const HtmlToolbarOptions(
               toolbarPosition: ToolbarPosition.custom,
             ),
             otherOptions: OtherOptions(height: MediaQuery.of(context).size.height - 230),
-            callbacks: Callbacks(
-              onChangeContent: (String? changed) {
-                debugPrint('content changed to $changed');
-                // if(changed != null) {
-                //   debugPrint('Outside If $changed, ${changed.length}, ${changedContent.length}');
-                //   if(changed.length+1 >= changedContent.length) {
-                //     debugPrint('Inside If $changed, ${changed.length}, ${changedContent.length}');
-                //     changedContent = changed ?? '';
-                //   }
-                // }
-                // if (changed != null) {
-                //   String filter = filterButtonTags(changed, ['companyName', 'companyLogo']);
-                //   if (filter != changed) {
-                //     controller.clear();
-                //     controller.insertHtml(filter);
-                //   }
-                // }
-                // setState(() {
-                  // if (redoUndoCount == mainRedoUndoCount) {
-                  //   redoUndoCount++;
-                  // }
-                  // mainRedoUndoCount++;
-                  // isRedoUndoDisable = false;
-                // });
-              },
-              onKeyDown: (index) {
-                debugPrint('index: $index');
-                // if (index == 8) {
-                //   callContentChange = false;
-                //   String filter = filterButtonTags(changedContent, ['companyName', 'companyLogo']);
-                //   if (filter != changedContent) {
-                //     controller.clear();
-                //     controller.insertHtml(filter);
-                //   }
-                // }
-                if(isRedoUndoDisable) {
-                  setState(() {
-                    isRedoUndoDisable = false;
-                  });
+            callbacks: Callbacks(onChangeContent: (String? changed) async {
+              debugPrint('content changed to $changed');
+              if (changed != null) {
+                if (changed.isNotEmpty && changed[changed.length - 1] == ' ') {
+                  print("Last character is a space");
+                } else {
+                  // controller.setText("$changed ");
                 }
               }
-              // onKeyDown: (index) async {
-              //   if (!_isControlPressed) {
-              //     _isControlPressed = index == 91;
-              //   }
-              //   if ((_isControlPressed && index == 86)) {
-              //     final clipboardData = await RichClipboard.getData();
-              //     if (clipboardData.html != null) {
-              //       debugPrint('Inside If');
-              //       // Define the regular expressions to match the <li> and <ol> tags
-              //       RegExp liRegex = RegExp(r'<li[^>]*>(.*?)</li>', dotAll: true);
-              //       RegExp olRegex = RegExp(r'<ol[^>]*>(.*?)</ol>', dotAll: true);
-              //
-              //       // Replace the <li> and <ol> tags with an empty string
-              //       String modifiedHtmlString = clipboardData.html
-              //           !.replaceAllMapped(liRegex, (Match match) => match.group(1) ?? '')
-              //           .replaceAllMapped(olRegex, (Match match) => match.group(1) ?? '');
-              //
-              //       // print('modifiedHtmlString: $modifiedHtmlString');
-              //       // String modifiedText = clipboardData.text!.toLowerCase();
-              //       // await RichClipboard.setData(RichClipboardData(
-              //       //     html: modifiedHtmlString
-              //       // ));
-              //       Future.microtask(() {
-              //         _isControlPressed = false;
-              //         controller.insertHtml(modifiedHtmlString);
-              //       });
-              //     }
+              // debugPrint('content changed to $changed');
+              // if(changed != null) {
+              //   debugPrint('Outside If $changed, ${changed.length}, ${changedContent.length}');
+              //   if(changed.length+1 >= changedContent.length) {
+              //     debugPrint('Inside If $changed, ${changed.length}, ${changedContent.length}');
+              //     changedContent = changed ?? '';
               //   }
               // }
-            ),
+              // if (changed != null) {
+              //   String filter = filterButtonTags(changed, ['companyName', 'companyLogo']);
+              //   if (filter != changed) {
+              //     controller.clear();
+              //     controller.insertHtml(filter);
+              //   }
+              // }
+              // setState(() {
+              // if (redoUndoCount == mainRedoUndoCount) {
+              //   redoUndoCount++;
+              // }
+              // mainRedoUndoCount++;
+              // isRedoUndoDisable = false;
+              // });
+            }, onKeyDown: (index) {
+              debugPrint('index: $index');
+              // if (index == 8) {
+              //   callContentChange = false;
+              //   String filter = filterButtonTags(changedContent, ['companyName', 'companyLogo']);
+              //   if (filter != changedContent) {
+              //     controller.clear();
+              //     controller.insertHtml(filter);
+              //   }
+              // }
+              if (isRedoUndoDisable) {
+                setState(() {
+                  isRedoUndoDisable = false;
+                });
+              }
+            }, onMouseDown: () {
+              // debugPrint('onMouseDown');
+              setContentEditable(false);
+            }, onMouseUp: () {
+              // debugPrint('onMouseUp');
+              setContentEditable(true);
+            }
+                // onKeyDown: (index) async {
+                //   if (!_isControlPressed) {
+                //     _isControlPressed = index == 91;
+                //   }
+                //   if ((_isControlPressed && index == 86)) {
+                //     final clipboardData = await RichClipboard.getData();
+                //     if (clipboardData.html != null) {
+                //       debugPrint('Inside If');
+                //       // Define the regular expressions to match the <li> and <ol> tags
+                //       RegExp liRegex = RegExp(r'<li[^>]*>(.*?)</li>', dotAll: true);
+                //       RegExp olRegex = RegExp(r'<ol[^>]*>(.*?)</ol>', dotAll: true);
+                //
+                //       // Replace the <li> and <ol> tags with an empty string
+                //       String modifiedHtmlString = clipboardData.html
+                //           !.replaceAllMapped(liRegex, (Match match) => match.group(1) ?? '')
+                //           .replaceAllMapped(olRegex, (Match match) => match.group(1) ?? '');
+                //
+                //       // print('modifiedHtmlString: $modifiedHtmlString');
+                //       // String modifiedText = clipboardData.text!.toLowerCase();
+                //       // await RichClipboard.setData(RichClipboardData(
+                //       //     html: modifiedHtmlString
+                //       // ));
+                //       Future.microtask(() {
+                //         _isControlPressed = false;
+                //         controller.insertHtml(modifiedHtmlString);
+                //       });
+                //     }
+                //   }
+                // }
+                ),
+            plugins: [
+              SummernoteAtMention(mentionsWeb: ["Shankar", "Yogesh", "Husain"])
+            ],
           )
         ],
       ),
@@ -363,4 +376,9 @@ class _HtmlEditorExampleState extends State<HtmlEditorExample> {
     return document.body?.outerHtml ?? '';
   }
 
+  void setContentEditable(bool editable) {
+    // debugPrint('setContentEditable - before');
+    // js.context.callMethod('setContentEditable', [editable.toString()]);
+    // debugPrint('setContentEditable - after');
+  }
 }

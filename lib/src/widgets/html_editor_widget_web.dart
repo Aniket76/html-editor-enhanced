@@ -71,6 +71,15 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
   void initSummernote() async {
     var headString = '';
     var summernoteCallbacks = '''callbacks: {
+        onBeforeCommand: function(e) {
+          console.log(`summernoteCallbacks onBeforeCommand`);  // Log message
+        },
+        onKeyup: function(e) {
+          console.log(`summernoteCallbacks onKeyUp`);  // Log message
+            document.querySelectorAll('#merge-tag').forEach(span => {
+                span.contentEditable = true;
+            });
+        },
         onKeydown: function(e) {
             var chars = \$(".note-editable").text();
             var totalChars = chars.length;
@@ -92,8 +101,19 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
             if (!allowedKeys && \$(e.target).text().length >= ${widget.htmlEditorOptions.characterLimit}) {
                 e.preventDefault();
             }''' : ''}
+            console.log(`summernoteCallbacks onKeydown`);  // Log message
             window.parent.postMessage(JSON.stringify({"view": "$createdViewId", "type": "toDart: characterCount", "totalChars": totalChars}), "*");
+            document.querySelectorAll('#merge-tag').forEach(span => {
+               span.contentEditable = false;
+            });
         },
+        onMouseup: function(e) {
+          console.log(`summernoteCallbacks onMouseUp`);  // Log message
+        },
+        onMousedown: function(e) {
+          console.log(`summernoteCallbacks onMouseDown`);  // Log message
+        },
+        
     ''';
     var maximumFileSize = 10485760;
     for (var p in widget.plugins) {
@@ -215,8 +235,9 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
             disableGrammar: false,
             spellCheck: ${widget.htmlEditorOptions.spellCheck},
             maximumFileSize: $maximumFileSize,
+            
             ${widget.htmlEditorOptions.customOptions}
-            $summernoteCallbacks
+            $summernoteCallbacks,
           });
           
           \$('#summernote-2').on('summernote.change', function(_, contents, \$editable) {
