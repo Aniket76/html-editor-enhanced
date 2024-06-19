@@ -76,7 +76,7 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
         },
         onKeyup: function(e) {
           console.log(`summernoteCallbacks onKeyUp`);  // Log message
-            document.querySelectorAll('#merge-tag').forEach(span => {
+            document.querySelectorAll('button[data-id="merge-tag"]').forEach(span => {
                 span.contentEditable = true;
             });
         },
@@ -117,7 +117,7 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
               // Not Allowed key is pressed, proceed with the action
               console.log(`summernoteCallbacks onKeydown - not allowed keys`);  // Log message
               window.parent.postMessage(JSON.stringify({"view": "$createdViewId", "type": "toDart: characterCount", "totalChars": totalChars}), "*");
-              document.querySelectorAll('#merge-tag').forEach(span => {
+              document.querySelectorAll('button[data-id="merge-tag"]').forEach(span => {
                 span.contentEditable = false;
               });
             } else {
