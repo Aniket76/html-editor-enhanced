@@ -1,15 +1,19 @@
 export 'dart:html';
 
 import 'dart:convert';
+import 'package:js/js.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 import 'package:html_editor_enhanced/utils/utils.dart';
+
 // ignore: avoid_web_libraries_in_flutter
 import 'dart:html' as html;
 import 'package:html_editor_enhanced/utils/shims/dart_ui.dart' as ui;
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
 
 /// The HTML Editor widget itself, for web (uses IFrameElement)
 class HtmlEditorWidget extends StatefulWidget {
@@ -79,6 +83,72 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
             document.querySelectorAll('button[data-id="merge-tag"]').forEach(span => {
                 span.contentEditable = true;
             });
+        },
+        onPaste: function(e) {
+          console.log('summernoteCallbacks onPaste');
+          var bufferText = ((e.originalEvent || e).clipboardData || window.clipboardData).getData('text/html');
+          e.preventDefault();
+          
+          // Parse the HTML string
+          var parser = new DOMParser();
+          var htmlDocument = parser.parseFromString(bufferText, 'text/html');
+        
+          // Define allowed tags
+          var allowedTags = new Set(['p', 'span', 'b', 'i', 'u', 'input', 'a', 'br', 'strong']);
+        
+          // Function to filter nodes
+          function filterNode(node) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              if (!allowedTags.has(node.tagName.toLowerCase())) {
+                // Collect disallowed element nodes to be removed later
+                nodesToRemove.push(node);
+              } else {
+                // Recursively filter child nodes
+                Array.from(node.childNodes).forEach(filterNode);
+              }
+            } else if (node.nodeType === Node.TEXT_NODE) {
+              // Keep text nodes
+              return;
+            } else {
+              // Collect other types of nodes to be removed later
+              nodesToRemove.push(node);
+            }
+          }
+        
+          // Collect nodes to be removed
+          var nodesToRemove = [];
+          
+          // Start filtering from the document body
+          Array.from(htmlDocument.body.childNodes).forEach(filterNode);
+        
+          // Remove collected nodes
+          nodesToRemove.forEach(node => {
+            var parent = node.parentNode;
+            if (parent) {
+              while (node.firstChild) {
+                parent.insertBefore(node.firstChild, node);
+              }
+              parent.removeChild(node);
+            }
+          });
+        
+          // Remove any remaining <li> tags manually
+          htmlDocument.querySelectorAll('li').forEach(liElement => {
+            var parent = liElement.parentNode;
+            if (parent) {
+              while (liElement.firstChild) {
+                parent.insertBefore(liElement.firstChild, liElement);
+              }
+              parent.removeChild(liElement);
+            }
+          });
+        
+          // Return the modified HTML string
+          var filteredHtml = htmlDocument.body.innerHTML;
+  
+          // Insert the filtered HTML
+          console.log('summernoteCallbacks onPasting');
+          document.execCommand('insertHTML', false, filteredHtml);
         },
         onKeydown: function(e) {
             var chars = \$(".note-editable").text();
@@ -221,11 +291,9 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
     }
     summernoteCallbacks = summernoteCallbacks + '}';
     var darkCSS = '';
-    if ((Theme.of(widget.initBC).brightness == Brightness.dark ||
-            widget.htmlEditorOptions.darkMode == true) &&
+    if ((Theme.of(widget.initBC).brightness == Brightness.dark || widget.htmlEditorOptions.darkMode == true) &&
         widget.htmlEditorOptions.darkMode != false) {
-      darkCSS =
-          '<link href=\"assets/packages/html_editor_enhanced/assets/summernote-lite-dark.css\" rel=\"stylesheet\">';
+      darkCSS = '<link href=\"assets/packages/html_editor_enhanced/assets/summernote-lite-dark.css\" rel=\"stylesheet\">';
     }
     var jsCallbacks = '';
     if (widget.callbacks != null) {
@@ -485,8 +553,7 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
         $jsCallbacks
       </script>
     """;
-    var filePath =
-        'packages/html_editor_enhanced/assets/summernote-no-plugins.html';
+    var filePath = 'packages/html_editor_enhanced/assets/summernote-no-plugins.html';
     if (widget.htmlEditorOptions.filePath != null) {
       filePath = widget.htmlEditorOptions.filePath!;
     }
@@ -495,18 +562,13 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
         .replaceFirst('<!--darkCSS-->', darkCSS)
         .replaceFirst('<!--headString-->', headString)
         .replaceFirst('<!--summernoteScripts-->', summernoteScripts)
-        .replaceFirst('"jquery.min.js"',
-            '"assets/packages/html_editor_enhanced/assets/jquery.min.js"')
-        .replaceFirst('"summernote-lite.min.css"',
-            '"assets/packages/html_editor_enhanced/assets/summernote-lite.min.css"')
-        .replaceFirst('"summernote-lite.min.js"',
-            '"assets/packages/html_editor_enhanced/assets/summernote-lite.min.js"');
+        .replaceFirst('"jquery.min.js"', '"assets/packages/html_editor_enhanced/assets/jquery.min.js"')
+        .replaceFirst('"summernote-lite.min.css"', '"assets/packages/html_editor_enhanced/assets/summernote-lite.min.css"')
+        .replaceFirst('"summernote-lite.min.js"', '"assets/packages/html_editor_enhanced/assets/summernote-lite.min.js"');
     if (widget.callbacks != null) addJSListener(widget.callbacks!);
     final iframe = html.IFrameElement()
       ..width = MediaQuery.of(widget.initBC).size.width.toString() //'800'
-      ..height = widget.htmlEditorOptions.autoAdjustHeight
-          ? actualHeight.toString()
-          : widget.otherOptions.height.toString()
+      ..height = widget.htmlEditorOptions.autoAdjustHeight ? actualHeight.toString() : widget.otherOptions.height.toString()
       // ignore: unsafe_html, necessary to load HTML string
       ..srcdoc = htmlString
       ..style.border = 'none'
@@ -536,32 +598,23 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
               data['view'] == createdViewId &&
               widget.htmlEditorOptions.autoAdjustHeight) {
             final docHeight = data['height'] ?? actualHeight;
-            if ((docHeight != null && docHeight != actualHeight) &&
-                mounted &&
-                docHeight > 0) {
+            if ((docHeight != null && docHeight != actualHeight) && mounted && docHeight > 0) {
               setState(mounted, this.setState, () {
-                actualHeight =
-                    docHeight + (toolbarKey.currentContext?.size?.height ?? 0);
+                actualHeight = docHeight + (toolbarKey.currentContext?.size?.height ?? 0);
               });
             }
           }
-          if (data['type'] != null &&
-              data['type'].contains('toDart: onChangeContent') &&
-              data['view'] == createdViewId) {
-            if (widget.callbacks != null &&
-                widget.callbacks!.onChangeContent != null) {
+          if (data['type'] != null && data['type'].contains('toDart: onChangeContent') && data['view'] == createdViewId) {
+            if (widget.callbacks != null && widget.callbacks!.onChangeContent != null) {
               widget.callbacks!.onChangeContent!.call(data['contents']);
             }
             if (widget.htmlEditorOptions.shouldEnsureVisible) {
-              Scrollable.of(context).position.ensureVisible(
-                  context.findRenderObject()!,
-                  duration: const Duration(milliseconds: 100),
-                  curve: Curves.easeIn);
+              Scrollable.of(context)
+                  .position
+                  .ensureVisible(context.findRenderObject()!, duration: const Duration(milliseconds: 100), curve: Curves.easeIn);
             }
           }
-          if (data['type'] != null &&
-              data['type'].contains('toDart: updateToolbar') &&
-              data['view'] == createdViewId) {
+          if (data['type'] != null && data['type'].contains('toDart: updateToolbar') && data['view'] == createdViewId) {
             if (widget.controller.toolbar != null) {
               widget.controller.toolbar!.updateToolbar(data);
             }
@@ -570,8 +623,7 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
         html.window.postMessage(jsonStr, '*');
         html.window.postMessage(jsonStr2, '*');
       });
-    ui.platformViewRegistry
-        .registerViewFactory(createdViewId, (int viewId) => iframe);
+    ui.platformViewRegistry.registerViewFactory(createdViewId, (int viewId) => iframe);
     setState(mounted, this.setState, () {
       summernoteInit = Future.value(true);
     });
@@ -580,13 +632,10 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: widget.htmlEditorOptions.autoAdjustHeight
-          ? actualHeight
-          : widget.otherOptions.height,
+      height: widget.htmlEditorOptions.autoAdjustHeight ? actualHeight : widget.otherOptions.height,
       child: Column(
         children: <Widget>[
-          widget.htmlToolbarOptions.toolbarPosition ==
-                  ToolbarPosition.aboveEditor
+          widget.htmlToolbarOptions.toolbarPosition == ToolbarPosition.aboveEditor
               ? ToolbarWidget(
                   key: toolbarKey,
                   controller: widget.controller,
@@ -605,13 +654,10 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
                           );
                         } else {
                           return Container(
-                              height: widget.htmlEditorOptions.autoAdjustHeight
-                                  ? actualHeight
-                                  : widget.otherOptions.height);
+                              height: widget.htmlEditorOptions.autoAdjustHeight ? actualHeight : widget.otherOptions.height);
                         }
                       }))),
-          widget.htmlToolbarOptions.toolbarPosition ==
-                  ToolbarPosition.belowEditor
+          widget.htmlToolbarOptions.toolbarPosition == ToolbarPosition.belowEditor
               ? ToolbarWidget(
                   key: toolbarKey,
                   controller: widget.controller,
@@ -738,9 +784,7 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
     html.window.onMessage.listen((event) {
       if (event.data != null && event.data.isNotEmpty) {
         var data = json.decode(event.data);
-        if (data['type'] != null &&
-            data['type'].contains('toDart:') &&
-            data['view'] == createdViewId) {
+        if (data['type'] != null && data['type'].contains('toDart:') && data['view'] == createdViewId) {
           if (data['type'].contains('onBeforeCommand')) {
             c.onBeforeCommand!.call(data['contents']);
           }
@@ -789,8 +833,8 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
                   data['error'].contains('base64')
                       ? UploadError.jsException
                       : data['error'].contains('unsupported')
-                      ? UploadError.unsupportedFile
-                      : UploadError.exceededMaxSize);
+                          ? UploadError.unsupportedFile
+                          : UploadError.exceededMaxSize);
             } else {
               var map = <String, dynamic>{
                 'lastModified': data['lastModified'],
@@ -807,8 +851,8 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
                   data['error'].contains('base64')
                       ? UploadError.jsException
                       : data['error'].contains('unsupported')
-                      ? UploadError.unsupportedFile
-                      : UploadError.exceededMaxSize);
+                          ? UploadError.unsupportedFile
+                          : UploadError.exceededMaxSize);
             }
           }
           if (data['type'].contains('onKeyDown')) {

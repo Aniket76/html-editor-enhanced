@@ -3322,38 +3322,4 @@ class ToolbarWidgetState extends State<ToolbarWidget> {
     // Return the modified HTML string
     return document.body?.outerHtml ?? '';
   }
-
-  // String filterHtml(String html) {
-  //   var document = parse(html);
-  //   var allowedTags = ['p', 'span', 'b', 'i', 'u', 'input', 'a', 'br', 'strong', 'li'];
-  //   _removeDisallowedTags(document.body?.children, allowedTags);
-  //   return document.body?.outerHtml ?? '';
-  // }
-  //
-  // void _removeDisallowedTags(List<dom.Node>? nodes, List<String> allowedTags) {
-  //   if (nodes == null) return;
-  //
-  //   for (var i = 0; i < nodes.length; i++) {
-  //     var node = nodes[i];
-  //     if (node is dom.Element && !allowedTags.contains(node.localName) && node.localName != 'li') {
-  //       var parent = node.parent;
-  //       var nextIndex = i + 1;
-  //       if (nextIndex < nodes.length) {
-  //         var next = nodes[nextIndex];
-  //         for (var child in node.children) {
-  //           parent?.insertBefore(child, next);
-  //         }
-  //       } else {
-  //         var tempNode = dom.Element.tag('span');
-  //         for (var child in node.children) {
-  //           tempNode.append(child);
-  //         }
-  //         parent?.append(tempNode);
-  //       }
-  //       node.remove();
-  //     } else {
-  //       _removeDisallowedTags(node.children, allowedTags);
-  //     }
-  //   }
-  // }
 }

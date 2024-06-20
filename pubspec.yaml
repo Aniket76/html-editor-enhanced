@@ -35,6 +35,7 @@ dependencies:
   meta: '>=1.0.0 <2.0.0'
   rich_clipboard: ^1.0.1
   html: ^0.15.0
+  js: ^0.6.3
 
 dev_dependencies:
   flutter_test:
