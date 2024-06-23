@@ -142,6 +142,13 @@ class _HtmlEditorWidgetWebState extends State<HtmlEditorWidget> {
               parent.removeChild(liElement);
             }
           });
+          
+          // Remove class attribute from all remaining elements
+          Array.from(htmlDocument.body.querySelectorAll('*')).forEach(element => {
+            if (element.hasAttribute('class')) {
+              element.removeAttribute('class');
+            }
+          });
         
           // Return the modified HTML string
           var filteredHtml = htmlDocument.body.innerHTML;
